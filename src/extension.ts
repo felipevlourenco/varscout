@@ -8,7 +8,12 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         out,
-        vscode.languages.registerCompletionItemProvider('css', tokenCompletionProvider, '-', '('),
+        vscode.languages.registerCompletionItemProvider(
+            ['css', 'scss', 'less', 'vue', 'svelte', 'astro'].map((language) => ({ language })),
+            tokenCompletionProvider,
+            '-',
+            '(',
+        ),
         watchTokenFiles(invalidateTokens),
         // Debug aid: dumps what the parser extracted from every configured token file.
         vscode.commands.registerCommand('varscout.showTokens', async () => {

@@ -19,7 +19,7 @@ Read a main design-tokens CSS file (e.g. `tokens.css`) and expose its CSS custom
 - [x] **Color swatches**: use `CompletionItemKind.Color` with the color value as documentation so VS Code renders a swatch
 - [x] **Resolve references**: if `--primary: var(--blue-500)`, show the final resolved value (and the reference chain)
 - [x] **Live updates**: file watcher re-parses token files on change
-- [ ] **Languages**: CSS, SCSS, Less, and `<style>` blocks in Vue / Svelte / Astro
+- [x] **Languages**: CSS, SCSS, Less, and `<style>` blocks in Vue / Svelte / Astro
 
 ## Phase 2
 - [ ] **Hover**: hovering `var(--x)` shows its value (all theme values if several)

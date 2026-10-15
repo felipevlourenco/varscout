@@ -1,27 +1,25 @@
 /* Sample design tokens */
 :root {
-  --blue-500: #3b82f6;
-  --primary: var(--blue-500);
-  --space-4: 1rem; /* inline comment */
-  /* --commented-out: nope; */
-  --shadow:
-    0 1px 2px rgb(0 0 0 / 10%),
-    0 4px 8px rgb(0 0 0 / 20%);
+    --blue-500: #3b82f6;
+    --primary: var(--blue-500);
+    --space-4: 1rem; /* inline comment */
+    /* --commented-out: nope; */
+    --shadow: 0 1px 2px rgb(0 0 0 / 10%), 0 4px 8px rgb(0 0 0 / 20%);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --blue-500: #60a5fa;
-  }
+    :root {
+        --blue-500: #60a5fa;
+    }
 }
 
 :root {
-  --text: rgb(17, 24, 39);
-  --surface: hsla(210, 40%, 96%, 0.9);
-  --accent: oklch(70% 0.15 200);
+    --text: rgb(17, 24, 39);
+    --surface: hsla(210, 40%, 96%, 0.9);
+    --accent: oklch(70% 0.15 200);
 }
 
 :root {
-  --brand: var(--primary);
-  --ring: 0 0 0 2px var(--primary);
+    --brand: var(--primary);
+    --ring: 0 0 0 2px var(--primary);
 }

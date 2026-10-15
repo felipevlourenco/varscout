@@ -10,7 +10,12 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:css"
+    "onLanguage:css",
+    "onLanguage:scss",
+    "onLanguage:less",
+    "onLanguage:vue",
+    "onLanguage:svelte",
+    "onLanguage:astro"
   ],
   "main": "./dist/extension.js",
   "contributes": {

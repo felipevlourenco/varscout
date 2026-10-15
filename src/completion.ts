@@ -18,11 +18,27 @@ export function completionContext(linePrefix: string): { start: number; inVar: b
     return /(^|[{;])\s*$/.test(linePrefix.slice(0, start)) ? undefined : { start, inVar: !!inVar };
 }
 
+/** Languages where CSS only lives in `<style>` blocks. */
+const EMBEDDED = ['vue', 'svelte', 'astro'];
+
+/** Whether the end of `text` is inside an open `<style ...>` block. */
+export function inStyleBlock(text: string): boolean {
+    let inside = false;
+    for (const m of text.matchAll(/<style\b[^>]*>|<\/style\s*>/gi)) {
+        inside = !m[0].startsWith('</');
+    }
+    return inside;
+}
+
 export const isColor = (value: string) =>
     /^(#[\da-f]{3,8}|(rgb|hsl|hwb|lab|lch|oklab|oklch|color)a?\(.*\))$/i.test(value);
 
 export const tokenCompletionProvider: vscode.CompletionItemProvider = {
     async provideCompletionItems(document, position) {
+        const before = new vscode.Range(0, 0, position.line, position.character);
+        if (EMBEDDED.includes(document.languageId) && !inStyleBlock(document.getText(before))) {
+            return undefined;
+        }
         const ctx = completionContext(document.lineAt(position).text.slice(0, position.character));
         if (!ctx) {
             return undefined;

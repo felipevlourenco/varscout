@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { completionContext, isColor } from '../completion';
+import { completionContext, inStyleBlock, isColor } from '../completion';
 
 suite('completionContext', () => {
     test('offers inside var( and on -- words in value position', () => {
@@ -30,11 +30,23 @@ suite('isColor', () => {
     });
 });
 
+suite('inStyleBlock', () => {
+    test('true only between <style> and </style>', () => {
+        assert.ok(inStyleBlock('<template></template>\n<style>\n.a { color: '));
+        assert.ok(inStyleBlock('<style lang="scss" scoped>\n.a {'));
+        assert.ok(inStyleBlock('<style>a{}</style>\n<style is:global>\n.a {'));
+        assert.ok(!inStyleBlock('<div style="color: '));
+        assert.ok(!inStyleBlock('<style>a{}</style>\n<div>'));
+        assert.ok(!inStyleBlock('<script>\nconst x = '));
+        assert.ok(!inStyleBlock('<style lang="scss"'));
+    });
+});
+
 suite('token completion provider', () => {
     suiteSetup(() => vscode.extensions.all.find((e) => e.packageJSON.name === 'varscout')!.activate());
 
-    const complete = async (content: string) => {
-        const doc = await vscode.workspace.openTextDocument({ language: 'css', content });
+    const complete = async (content: string, language = 'css') => {
+        const doc = await vscode.workspace.openTextDocument({ language, content });
         const list = await vscode.commands.executeCommand<vscode.CompletionList>(
             'vscode.executeCompletionItemProvider',
             doc.uri,
@@ -91,7 +103,8 @@ suite('token completion provider', () => {
             await vscode.workspace.fs.delete(file, { useTrash: false }).then(undefined, () => undefined);
         });
 
-        test('edits to a token file are picked up without reloading', async () => {
+        test('edits to a token file are picked up without reloading', async function () {
+            this.timeout(15000); // three watcher round-trips, each polled for up to 5s
             await write(':root { --live-one: 1 }');
             await config().update('files', ['styles/live.css'], vscode.ConfigurationTarget.Workspace);
             await eventually('--live-one', true);
@@ -103,6 +116,13 @@ suite('token completion provider', () => {
             await vscode.workspace.fs.delete(file, { useTrash: false });
             await eventually('--live-two', false);
         });
+    });
+
+    test('works in SCSS and Less', async () => {
+        for (const language of ['scss', 'less']) {
+            const items = await complete('.a { .b { color: var(', language);
+            assert.strictEqual(items.get('--primary')?.detail, '#3b82f6', language);
+        }
     });
 
     test('also triggers on a -- word', async () => {
