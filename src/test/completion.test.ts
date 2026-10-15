@@ -70,6 +70,41 @@ suite('token completion provider', () => {
         assert.strictEqual(items.get('--ring')?.documentation, '--ring → --primary → --blue-500');
     });
 
+    suite('live updates', () => {
+        const file = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, 'styles', 'live.css');
+        const write = (css: string) => vscode.workspace.fs.writeFile(file, new TextEncoder().encode(css));
+        const config = () => vscode.workspace.getConfiguration('cssTokens');
+
+        // File watchers are asynchronous, so poll instead of asserting right after the write.
+        const eventually = async (name: string, expected: boolean) => {
+            for (let i = 0; i < 50; i++) {
+                if ((await complete('a { color: var(')).has(name) === expected) {
+                    return;
+                }
+                await new Promise((r) => setTimeout(r, 100));
+            }
+            assert.fail(`${name} should ${expected ? '' : 'not '}be offered`);
+        };
+
+        suiteTeardown(async () => {
+            await config().update('files', undefined, vscode.ConfigurationTarget.Workspace);
+            await vscode.workspace.fs.delete(file, { useTrash: false }).then(undefined, () => undefined);
+        });
+
+        test('edits to a token file are picked up without reloading', async () => {
+            await write(':root { --live-one: 1 }');
+            await config().update('files', ['styles/live.css'], vscode.ConfigurationTarget.Workspace);
+            await eventually('--live-one', true);
+
+            await write(':root { --live-two: 2 }');
+            await eventually('--live-two', true);
+            await eventually('--live-one', false);
+
+            await vscode.workspace.fs.delete(file, { useTrash: false });
+            await eventually('--live-two', false);
+        });
+    });
+
     test('also triggers on a -- word', async () => {
         assert.ok((await complete('a { color: --pri')).has('--primary'));
     });

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { tokenCompletionProvider } from './completion';
 import { invalidateTokens, readTokenFile } from './tokens';
-import { getTokenFiles } from './tokenFiles';
+import { getTokenFiles, watchTokenFiles } from './tokenFiles';
 
 export function activate(context: vscode.ExtensionContext) {
     const out = vscode.window.createOutputChannel('VarScout');
@@ -9,11 +9,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         out,
         vscode.languages.registerCompletionItemProvider('css', tokenCompletionProvider, '-', '('),
-        vscode.workspace.onDidChangeConfiguration((e) => {
-            if (e.affectsConfiguration('cssTokens.files')) {
-                invalidateTokens();
-            }
-        }),
+        watchTokenFiles(invalidateTokens),
         // Debug aid: dumps what the parser extracted from every configured token file.
         vscode.commands.registerCommand('varscout.showTokens', async () => {
             out.clear();

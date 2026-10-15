@@ -4,4 +4,4 @@ node_modules
 .vscode-test/
 *.vsix
 test-fixtures/ws/.vscode/
-SPEC.md
+SPEC.mdtest-fixtures/ws/styles/live.css
