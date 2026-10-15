@@ -15,7 +15,7 @@ suite('getTokenFiles', () => {
     });
 
     test('multiple globs are merged and de-duplicated', async () => {
-        await config().update('files', ['**/tokens.css', 'styles/*.css', 'tokens.css'], vscode.ConfigurationTarget.Workspace);
+        await config().update('files', ['**/tokens.css', 'styles/extra.*', 'tokens.css'], vscode.ConfigurationTarget.Workspace);
         assert.deepStrictEqual(await names(), [path.join('styles', 'extra.css'), 'tokens.css']);
     });
 

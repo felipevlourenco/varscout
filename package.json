@@ -9,7 +9,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:css"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
@@ -26,7 +28,13 @@
           "markdownDescription": "Paths or globs of the CSS token files (relative to each workspace folder, or absolute). `node_modules` is excluded from globs."
         }
       }
-    }
+    },
+    "commands": [
+      {
+        "command": "varscout.showTokens",
+        "title": "VarScout: Show Parsed Tokens"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",
@@ -37,23 +45,27 @@
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "dev": "pnpm run compile && code --extensionDevelopmentPath=\"$PWD\" test-fixtures/ws"
   },
   "devDependencies": {
-    "@types/vscode": "^1.140.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "24.x",
-    "typescript-eslint": "^8.61.1",
-    "eslint": "^10.5.0",
-    "typescript": "^6.0.3",
-    "ts-loader": "^9.6.2",
-    "webpack": "^5.107.2",
-    "webpack-cli": "^7.0.3",
+    "@types/vscode": "^1.140.0",
     "@vscode/test-cli": "^0.0.15",
-    "@vscode/test-electron": "^3.0.0"
+    "@vscode/test-electron": "^3.0.0",
+    "eslint": "^10.5.0",
+    "ts-loader": "^9.6.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.1",
+    "webpack": "^5.107.2",
+    "webpack-cli": "^7.0.3"
   },
   "overrides": {
     "diff": "^8.0.4",
     "serialize-javascript": "^7.0.6"
+  },
+  "dependencies": {
+    "postcss": "^8.5.30"
   }
 }
