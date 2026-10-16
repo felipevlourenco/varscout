@@ -54,4 +54,19 @@ suite('parseTokens', () => {
             ],
         );
     });
+
+    test('records the selector / at-rule context, skipping @layer', () => {
+        const css = `:root { --a: 1 }
+        .dark,
+        [data-theme="dark"] { --b: 2 }
+        @layer tokens { @media (min-width: 40em) { :root { --c: 3 } } }`;
+        assert.deepStrictEqual(
+            parseTokens(css).map(({ name, context }) => [name, context]),
+            [
+                ['--a', ':root'],
+                ['--b', '.dark, [data-theme="dark"]'],
+                ['--c', '@media (min-width: 40em) :root'],
+            ],
+        );
+    });
 });

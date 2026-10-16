@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { inCss } from './languages';
-import { resolve } from './resolve';
-import { getTokens } from './tokens';
+import { themeValues } from './themes';
+import { getThemes } from './tokens';
 
 /**
  * Where the token name being typed starts in `linePrefix` and whether it's already inside `var(`,
@@ -29,9 +29,10 @@ export const tokenCompletionProvider: vscode.CompletionItemProvider = {
             return undefined;
         }
         const range = new vscode.Range(position.line, ctx.start, position.line, position.character);
-        const tokens = await getTokens();
-        return [...tokens.keys()].map((name) => {
-            const { value, chain } = resolve(name, tokens);
+        const themes = await getThemes();
+        return [...themes.get('default')!.keys()].map((name) => {
+            const entries = themeValues(name, themes);
+            const { value, chain } = entries[0];
             const color = isColor(value);
             const item = new vscode.CompletionItem(
                 name,
@@ -40,7 +41,11 @@ export const tokenCompletionProvider: vscode.CompletionItemProvider = {
             item.detail = value;
             // VS Code draws the swatch from a color at the start of the documentation string
             // (only for #rgb/#rrggbb and comma-style rgb()/hsl(); other formats get the Color icon only).
-            const doc = [color ? value : '', chain.length ? `${name} → ${chain.join(' → ')}` : ''].filter(Boolean);
+            const doc = [
+                color ? value : '',
+                chain.length ? `${name} → ${chain.join(' → ')}` : '',
+                entries.length > 1 ? entries.map((e) => `${e.theme}: ${e.value}`).join('\n') : '',
+            ].filter(Boolean);
             item.documentation = doc.length ? doc.join('\n\n') : undefined;
             item.insertText = ctx.inVar ? name : `var(${name})`;
             item.range = range;

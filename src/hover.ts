@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { resolveValue } from './resolve';
-import { getDefinitions, getTokens } from './tokens';
+import { getThemes } from './tokens';
+import { themeValues } from './themes';
 import { varNameAt } from './usage';
 
 export const tokenHoverProvider: vscode.HoverProvider = {
@@ -10,16 +10,16 @@ export const tokenHoverProvider: vscode.HoverProvider = {
             return undefined;
         }
         const { name, range } = usage;
-        const definitions = (await getDefinitions()).get(name);
-        if (!definitions) {
+        const entries = themeValues(name, await getThemes());
+        if (!entries.length) {
             return undefined;
         }
-        const tokens = await getTokens();
-        const resolved = definitions.map((d) => resolveValue(d.value, tokens, name));
+        // Label every line when there's more than one value or the only one isn't the default.
+        const labelled = entries.length > 1 || entries[0].theme !== 'default';
         const md = new vscode.MarkdownString();
-        md.appendCodeblock(resolved.map((r) => `${name}: ${r.value};`).join('\n'), 'css');
-        if (resolved[0].chain.length) {
-            md.appendMarkdown([name, ...resolved[0].chain].map((n) => `\`${n}\``).join(' → '));
+        md.appendCodeblock(entries.map((e) => `${name}: ${e.value};${labelled ? ` /* ${e.theme} */` : ''}`).join('\n'), 'css');
+        if (entries[0].chain.length) {
+            md.appendMarkdown([name, ...entries[0].chain].map((n) => `\`${n}\``).join(' → '));
         }
         return new vscode.Hover(md, range);
     },

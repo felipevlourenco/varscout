@@ -67,7 +67,8 @@ suite('token completion provider', () => {
     test('colors get the Color kind with the value as documentation; others stay Variable', async () => {
         const items = await complete('a { color: var(');
         assert.strictEqual(items.get('--blue-500')?.kind, vscode.CompletionItemKind.Color);
-        assert.strictEqual(items.get('--blue-500')?.documentation, '#3b82f6');
+        // The color comes first so VS Code draws the swatch; theme values follow.
+        assert.ok(String(items.get('--blue-500')?.documentation).startsWith('#3b82f6\n\ndefault: #3b82f6'));
         assert.strictEqual(items.get('--space-4')?.kind, vscode.CompletionItemKind.Variable);
         assert.strictEqual(items.get('--space-4')?.documentation, undefined);
         assert.strictEqual(items.get('--shadow')?.kind, vscode.CompletionItemKind.Variable);
@@ -78,9 +79,22 @@ suite('token completion provider', () => {
         const brand = items.get('--brand');
         assert.strictEqual(brand?.detail, '#3b82f6');
         assert.strictEqual(brand?.kind, vscode.CompletionItemKind.Color);
-        assert.strictEqual(brand?.documentation, '#3b82f6\n\n--brand → --primary → --blue-500');
+        assert.ok(String(brand?.documentation).startsWith('#3b82f6\n\n--brand → --primary → --blue-500'));
         assert.strictEqual(items.get('--ring')?.detail, '0 0 0 2px #3b82f6');
-        assert.strictEqual(items.get('--ring')?.documentation, '--ring → --primary → --blue-500');
+        assert.ok(String(items.get('--ring')?.documentation).startsWith('--ring → --primary → --blue-500'));
+    });
+
+    test('tokens redefined under a theme list a value per theme in the documentation', async () => {
+        const items = await complete('a { color: var(');
+        assert.strictEqual(
+            items.get('--brand')?.documentation,
+            '#3b82f6\n\n--brand → --primary → --blue-500\n\ndefault: #3b82f6\n@media (prefers-color-scheme: dark) :root: #60a5fa',
+        );
+        assert.strictEqual(
+            items.get('--surface')?.documentation,
+            'hsla(210, 40%, 96%, 0.9)\n\ndefault: hsla(210, 40%, 96%, 0.9)\n.dark: hsla(222, 47%, 11%, 0.9)',
+        );
+        assert.strictEqual(items.get('--space-4')?.documentation, undefined); // single value: no theme list
     });
 
     suite('live updates', () => {

@@ -23,7 +23,19 @@ suite('token hover', () => {
 
     test('lists every definition of a redefined token', async () => {
         const text = await hover('a { color: var(--blue-500); }', '--blue-500');
-        assert.ok(text.includes('--blue-500: #3b82f6;\n--blue-500: #60a5fa;'), text);
+        assert.ok(
+            text.includes(
+                '--blue-500: #3b82f6; /* default */\n--blue-500: #60a5fa; /* @media (prefers-color-scheme: dark) :root */',
+            ),
+            text,
+        );
+    });
+
+    test('shows per-theme values for attribute selectors and for tokens that only inherit the change', async () => {
+        const text = await hover('a { color: var(--text); background: var(--primary); }', '--text');
+        assert.ok(text.includes('--text: rgb(229, 231, 235); /* :root[data-theme="dark"] */'), text);
+        const inherited = await hover('a { background: var(--primary); }', '--primary');
+        assert.ok(inherited.includes('--primary: #60a5fa; /* @media (prefers-color-scheme: dark) :root */'), inherited);
     });
 
     test('nothing for unknown tokens or outside var()', async () => {
