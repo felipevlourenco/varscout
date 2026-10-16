@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { completionContext, isColor } from '../completion';
+import { categoryOf, completionContext, isColor, sortTokens } from '../completion';
 import { inStyleBlock } from '../languages';
 
 suite('completionContext', () => {
@@ -28,6 +28,23 @@ suite('isColor', () => {
         for (const v of ['1rem', 'var(--blue-500)', '0 1px 2px rgb(0 0 0 / 10%)', '#zzz', '16px']) {
             assert.ok(!isColor(v), v);
         }
+    });
+});
+
+suite('categories', () => {
+    test('category is the first name segment', () => {
+        assert.strictEqual(categoryOf('--color-primary'), 'color');
+        assert.strictEqual(categoryOf('--space-4'), 'space');
+        assert.strictEqual(categoryOf('--color-brand-500'), 'color');
+        assert.strictEqual(categoryOf('--primary'), undefined);
+        assert.strictEqual(categoryOf('--x-'), undefined);
+    });
+
+    test('grouped first (alphabetical), numbers sort numerically, ungrouped last', () => {
+        assert.deepStrictEqual(
+            sortTokens(['--primary', '--space-10', '--color-b', '--space-2', '--color-a', '--accent']),
+            ['--color-a', '--color-b', '--space-2', '--space-10', '--accent', '--primary'],
+        );
     });
 });
 
@@ -72,6 +89,31 @@ suite('token completion provider', () => {
         assert.strictEqual(items.get('--space-4')?.kind, vscode.CompletionItemKind.Variable);
         assert.strictEqual(items.get('--space-4')?.documentation, undefined);
         assert.strictEqual(items.get('--shadow')?.kind, vscode.CompletionItemKind.Variable);
+    });
+
+    test('items are grouped by prefix: category shown, sortText follows the grouping', async () => {
+        const doc = await vscode.workspace.openTextDocument({ language: 'css', content: 'a { color: var(' });
+        const list = await vscode.commands.executeCommand<vscode.CompletionList>(
+            'vscode.executeCompletionItemProvider',
+            doc.uri,
+            doc.positionAt(15),
+        );
+        const ours = list.items.filter((i) => i.detail !== undefined && i.sortText !== undefined);
+        const name = (i: vscode.CompletionItem) => (typeof i.label === 'string' ? i.label : i.label.label);
+        const ordered = ours.sort((a, b) => a.sortText!.localeCompare(b.sortText!)).map(name);
+        assert.deepStrictEqual(ordered.slice(0, 7), [
+            '--blue-500',
+            '--color-bg',
+            '--color-text',
+            '--space-2',
+            '--space-4',
+            '--space-10',
+            '--accent',
+        ]);
+        const space = ours.find((i) => name(i) === '--space-4')!;
+        assert.strictEqual((space.label as vscode.CompletionItemLabel).description, 'space · 1rem');
+        assert.strictEqual(space.detail, '1rem'); // still in the details pane
+        assert.strictEqual(ours.find((i) => name(i) === '--primary')!.label, '--primary'); // no category
     });
 
     test('references show the resolved value and the chain', async () => {

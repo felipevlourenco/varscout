@@ -29,7 +29,7 @@ Read a main design-tokens CSS file (e.g. `tokens.css`) and expose its CSS custom
 - [x] **Hardcoded value → token quick fix**: e.g. `color: #3b82f6` → suggest replacing with `var(--blue-500)`
 
 ## Phase 3 — Polish
-- [ ] Group/sort by prefix (`--color-*`, `--space-*`) and show category
+- [x] Group/sort by prefix (`--color-*`, `--space-*`) and show category
 - [ ] Show px equivalent for rem values, e.g. `1.5rem (24px)`
 - [ ] Support token files from `node_modules` (design system shipped as a package)
 - [ ] Support CSS-in-JS and TS/TSX (styled-components, inline `style`)

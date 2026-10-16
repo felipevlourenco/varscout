@@ -32,3 +32,10 @@
 .dark {
     --surface: hsla(222, 47%, 11%, 0.9);
 }
+
+:root {
+    --color-bg: #ffffff;
+    --color-text: #111827;
+    --space-2: 0.5rem;
+    --space-10: 2.5rem;
+}
