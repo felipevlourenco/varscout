@@ -2,6 +2,7 @@
   "name": "varscout",
   "publisher": "felipelourenco",
   "displayName": "VarScout",
+  "icon": "images/icon.png",
   "description": "Autocomplete CSS custom properties from your project's CSS token files, making design tokens easier to discover and use across your codebase.",
   "version": "0.1.0",
   "license": "MIT",

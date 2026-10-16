@@ -4,6 +4,8 @@ Autocomplete, hover, go-to-definition and diagnostics for your design tokens.
 
 VarScout reads the CSS file(s) where you define your tokens (CSS custom properties such as `--color-primary`) and makes them available in every other style file of the project. Each suggestion shows the token's **name and its actual value**, so you can see what you are picking without opening the token file.
 
+![Typing var( in a CSS file: the suggestion list filters as you type and inserts the token](images/demo.gif)
+
 ## Quick start
 
 1. Define your tokens in a file named `tokens.css` anywhere in the workspace:
@@ -35,6 +37,8 @@ VarScout reads the CSS file(s) where you define your tokens (CSS custom properti
 
 ### Autocomplete
 
+![The completion list: color swatches, the category and value of each token, and the value per theme in the details pane](images/completion.png)
+
 - Suggestions appear after `var(` and when you type a word starting with `--` in a value position. They don't appear when you are *declaring* a new property (`--my-token: …`).
 - **Name and value.** Each item shows the token name and its value.
 - **Color swatches.** Color tokens use the Color item kind, with the color in the documentation, so VS Code draws a swatch. Two limits from VS Code itself: swatches only render for `#rgb`, `#rrggbb` and comma-style `rgb()`/`hsl()`/`rgba()`/`hsla()`; other formats (`oklch()`, `#rrggbbaa`, `rgb(0 0 0 / 50%)`) get the color icon without a swatch.
@@ -44,6 +48,8 @@ VarScout reads the CSS file(s) where you define your tokens (CSS custom properti
 - **px for rem.** `rem` values are shown with their px size, e.g. `1.5rem (24px)`. Only top-level lengths are converted, not those inside `calc()` or `clamp()`. Set [`cssTokens.rootFontSize`](#settings) if your root isn't 16px.
 
 ### Hover
+
+![Hovering var(--color-primary) shows its value for the default theme and for the dark theme](images/hover.png)
 
 Hover the token name inside `var(--x)` to see its resolved value, the reference chain, and its value under each theme.
 
@@ -64,6 +70,8 @@ Themes are resolved as a whole: if only `--blue-500` is redefined in `.dark`, th
 
 ### Diagnostics
 
+![A warning on a token name that is not defined in any token file](images/diagnostics.png)
+
 `var(--x)` where `--x` is in none of your token files gets a warning: `Unknown CSS variable "--x"`. Not reported:
 
 - names declared in the same file (`--local: 4px; … var(--local)`);
@@ -73,6 +81,8 @@ Themes are resolved as a whole: if only `--blue-500` is redefined in `.dark`, th
 In JS/TS, names set with `style.setProperty('--x', …)` or a `'--x':` style-object key count as declared.
 
 ### Quick fix: hardcoded value → token
+
+![Quick Fix menu offering to replace #ef4444 with var(--color-danger)](images/quick-fix.png)
 
 Put the cursor on a hardcoded value and open Quick Fixes (Cmd/Ctrl+.) to replace it with a token that has the same value:
 

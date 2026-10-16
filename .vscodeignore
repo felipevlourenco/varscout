@@ -16,3 +16,5 @@ test-fixtures/**
 SPEC.md
 pnpm-lock.yaml
 .npmrc
+images/**
+!images/icon.png
