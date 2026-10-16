@@ -26,7 +26,7 @@ Read a main design-tokens CSS file (e.g. `tokens.css`) and expose its CSS custom
 - [x] **Go to definition**: Cmd/Ctrl+click jumps to the token's declaration
 - [x] **Theme awareness**: tokens redefined under `[data-theme="dark"]`, `.dark`, etc. show a value per theme
 - [x] **Diagnostics**: warn on `--var` usages that don't exist in the token files
-- [ ] **Hardcoded value → token quick fix**: e.g. `color: #3b82f6` → suggest replacing with `var(--blue-500)`
+- [x] **Hardcoded value → token quick fix**: e.g. `color: #3b82f6` → suggest replacing with `var(--blue-500)`
 
 ## Phase 3 — Polish
 - [ ] Group/sort by prefix (`--color-*`, `--space-*`) and show category

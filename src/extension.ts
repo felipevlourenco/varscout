@@ -4,6 +4,7 @@ import { tokenDefinitionProvider } from './definition';
 import { startDiagnostics } from './diagnostics';
 import { tokenHoverProvider } from './hover';
 import { SELECTOR } from './languages';
+import { hardcodedValueFixes } from './quickfix';
 import { invalidateTokens, readTokenFile } from './tokens';
 import { getTokenFiles, watchTokenFiles } from './tokenFiles';
 
@@ -17,6 +18,9 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.languages.registerCompletionItemProvider(SELECTOR, tokenCompletionProvider, '-', '('),
         vscode.languages.registerHoverProvider(SELECTOR, tokenHoverProvider),
         vscode.languages.registerDefinitionProvider(SELECTOR, tokenDefinitionProvider),
+        vscode.languages.registerCodeActionsProvider(SELECTOR, hardcodedValueFixes, {
+            providedCodeActionKinds: [vscode.CodeActionKind.QuickFix],
+        }),
         watchTokenFiles(() => {
             invalidateTokens();
             diagnostics.refreshAll();

@@ -33,7 +33,8 @@ suite('token hover', () => {
 
     test('shows per-theme values for attribute selectors and for tokens that only inherit the change', async () => {
         const text = await hover('a { color: var(--text); background: var(--primary); }', '--text');
-        assert.ok(text.includes('--text: rgb(229, 231, 235); /* :root[data-theme="dark"] */'), text);
+        // Quote style depends on the formatter that last saved the fixture.
+        assert.match(text, /--text: rgb\(229, 231, 235\); \/\* :root\[data-theme=["']dark["']\] \*\//);
         const inherited = await hover('a { background: var(--primary); }', '--primary');
         assert.ok(inherited.includes('--primary: #60a5fa; /* @media (prefers-color-scheme: dark) :root */'), inherited);
     });
