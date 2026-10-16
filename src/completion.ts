@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { inCss, SCRIPT, templateRegionAt } from './languages';
 import { rootFontSize, withPx } from './rem';
 import { themeValues } from './themes';
+import { ThemeMaps } from './themes';
 import { getThemes } from './tokens';
 
 /**
@@ -64,10 +65,24 @@ export const categoryOf = (name: string) => /^--([^-]+)-./.exec(name)?.[1];
 
 /** Grouped tokens by category (alphabetical), then the ungrouped ones; numbers compare as numbers (`--space-2` < `--space-10`). */
 export function sortTokens(names: string[]): string[] {
-    const key = (n: string) => (categoryOf(n) ? `0${categoryOf(n)}` : '1');
-    return [...names].sort(
-        (a, b) => key(a).localeCompare(key(b)) || a.localeCompare(b, undefined, { numeric: true }),
-    );
+    const category = new Map(names.map((n) => [n, categoryOf(n)]));
+    return [...names].sort((a, b) => {
+        const [ca, cb] = [category.get(a), category.get(b)];
+        return Number(!ca) - Number(!cb) || collator.compare(ca ?? '', cb ?? '') || collator.compare(a, b);
+    });
+}
+
+const collator = new Intl.Collator(undefined, { numeric: true }); // reused: `localeCompare(..., options)` builds one per call
+
+const orderCache = new WeakMap<ThemeMaps, string[]>();
+
+/** Sorted token names of a token set, computed once per set: sorting on every request costs ~35ms per 20k tokens. */
+export function orderedNames(themes: ThemeMaps): string[] {
+    let names = orderCache.get(themes);
+    if (!names) {
+        orderCache.set(themes, (names = sortTokens([...themes.get('default')!.keys()])));
+    }
+    return names;
 }
 
 export const tokenCompletionProvider: vscode.CompletionItemProvider = {
@@ -79,7 +94,7 @@ export const tokenCompletionProvider: vscode.CompletionItemProvider = {
         const range = new vscode.Range(position.line, ctx.start, position.line, position.character);
         const themes = await getThemes(document.uri);
         const px = rootFontSize(document.uri);
-        return sortTokens([...themes.get('default')!.keys()]).map((name, rank) => {
+        return orderedNames(themes).map((name, rank) => {
             const entries = themeValues(name, themes);
             const { value, chain } = entries[0];
             const color = isColor(value);

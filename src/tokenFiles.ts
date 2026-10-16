@@ -58,11 +58,11 @@ export async function getTokenFiles(folder = vscode.workspace.workspaceFolders?.
 }
 
 /**
- * Calls `onChange` when a token file of any workspace folder is created, changed or deleted, and when
+ * Calls `onChange(file)` when a token file of any workspace folder is created, changed or deleted, and when
  * the setting or the workspace folders change (watchers are rebuilt for the new patterns).
  * Only saved changes are seen: unsaved edits in an open token file don't count.
  */
-export function watchTokenFiles(onChange: () => void): vscode.Disposable {
+export function watchTokenFiles(onChange: (changed?: vscode.Uri) => void): vscode.Disposable {
     let watchers: vscode.FileSystemWatcher[] = [];
     const rebuild = () => {
         watchers.forEach((w) => w.dispose());

@@ -3,8 +3,31 @@ import { parseTokens, Token } from './parser';
 import { getTokenFiles } from './tokenFiles';
 import { buildThemeMaps, ThemeMaps } from './themes';
 
+/** Number of files actually parsed (not served from the cache); lets tests check the cache. */
+export const stats = { parses: 0 };
+
+const parsed = new Map<string, { stamp: string; tokens: Token[] }>();
+
+/** Drops the cached parse of `uri`, for when a watcher saw it change. */
+export function forgetFile(uri: vscode.Uri) {
+    parsed.delete(uri.toString());
+}
+
+/**
+ * The tokens of a file. The parse is cached and reused while the file's modification time and size are unchanged,
+ * so rebuilding the token set (settings change, reload, another file changed) only re-parses files that changed.
+ */
 export async function readTokenFile(uri: vscode.Uri): Promise<Token[]> {
-    return parseTokens(new TextDecoder().decode(await vscode.workspace.fs.readFile(uri)));
+    const { mtime, size } = await vscode.workspace.fs.stat(uri);
+    const stamp = `${mtime}:${size}`; // taken before reading: if the file changes meanwhile, the next check re-parses
+    const hit = parsed.get(uri.toString());
+    if (hit?.stamp === stamp) {
+        return hit.tokens;
+    }
+    const tokens = parseTokens(new TextDecoder().decode(await vscode.workspace.fs.readFile(uri)));
+    stats.parses++;
+    parsed.set(uri.toString(), { stamp, tokens });
+    return tokens;
 }
 
 /** A token declaration and the file it lives in. */

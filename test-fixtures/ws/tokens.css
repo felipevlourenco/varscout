@@ -4,6 +4,7 @@
     --blue-500: #3b82f6;
     --primary: var(--blue-500);
     --space-4: 1rem; /* inline comment */
+    --space-20: 5rem;
     /* --commented-out: nope; */
     --shadow: 0 1px 2px rgb(0 0 0 / 10%), 0 4px 8px rgb(0 0 0 / 20%);
 }
