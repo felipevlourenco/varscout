@@ -111,8 +111,8 @@ suite('token completion provider', () => {
             '--accent',
         ]);
         const space = ours.find((i) => name(i) === '--space-4')!;
-        assert.strictEqual((space.label as vscode.CompletionItemLabel).description, 'space · 1rem');
-        assert.strictEqual(space.detail, '1rem'); // still in the details pane
+        assert.strictEqual((space.label as vscode.CompletionItemLabel).description, 'space · 1rem (16px)');
+        assert.strictEqual(space.detail, '1rem (16px)'); // still in the details pane
         assert.strictEqual(ours.find((i) => name(i) === '--primary')!.label, '--primary'); // no category
     });
 
@@ -172,6 +172,12 @@ suite('token completion provider', () => {
 
             await vscode.workspace.fs.delete(file, { useTrash: false });
             await eventually('--live-two', false);
+        });
+
+        test('tokens from an installed package are offered', async () => {
+            await config().update('files', ['@acme/design/css/tokens.css'], vscode.ConfigurationTarget.Workspace);
+            await eventually('--acme-brand', true);
+            await eventually('--primary', false);
         });
     });
 

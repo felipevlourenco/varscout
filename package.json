@@ -30,7 +30,13 @@
           "default": [
             "**/tokens.css"
           ],
-          "markdownDescription": "Paths or globs of the CSS token files (relative to each workspace folder, or absolute). `node_modules` is excluded from globs."
+          "markdownDescription": "Paths or globs of the CSS token files: relative to each workspace folder, absolute, or a file inside an installed package such as `@acme/tokens/dist/tokens.css` (looked up in the nearest `node_modules`). Globs skip `node_modules` unless the entry names it. VS Code doesn't watch `node_modules`, so after updating a package run **VarScout: Reload Tokens**."
+        },
+        "cssTokens.rootFontSize": {
+          "type": "number",
+          "default": 16,
+          "minimum": 1,
+          "markdownDescription": "Size of `1rem` in px, used to show px equivalents of `rem` values (e.g. `1.5rem (24px)`). Set it if your root font size isn't 16px."
         }
       }
     },
@@ -38,6 +44,10 @@
       {
         "command": "varscout.showTokens",
         "title": "VarScout: Show Parsed Tokens"
+      },
+      {
+        "command": "varscout.reloadTokens",
+        "title": "VarScout: Reload Tokens"
       }
     ]
   },

@@ -7,3 +7,4 @@ test-fixtures/ws/.vscode/
 SPEC.md
 test-fixtures/ws/styles/live.css
 !test-fixtures/ws/node_modules
+!test-fixtures/node_modules

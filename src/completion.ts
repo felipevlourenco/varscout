@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { inCss } from './languages';
+import { rootFontSize, withPx } from './rem';
 import { themeValues } from './themes';
 import { getThemes } from './tokens';
 
@@ -41,25 +42,27 @@ export const tokenCompletionProvider: vscode.CompletionItemProvider = {
         }
         const range = new vscode.Range(position.line, ctx.start, position.line, position.character);
         const themes = await getThemes();
+        const px = rootFontSize();
         return sortTokens([...themes.get('default')!.keys()]).map((name, rank) => {
             const entries = themeValues(name, themes);
             const { value, chain } = entries[0];
             const color = isColor(value);
+            const shown = withPx(value, px);
             const category = categoryOf(name);
             // VS Code shows `detail` on the right only for plain string labels; with a label object it shows
             // `description` there instead, so the value has to go into the description next to the category.
             const item = new vscode.CompletionItem(
-                category ? { label: name, description: `${category} · ${value}` } : name,
+                category ? { label: name, description: `${category} · ${shown}` } : name,
                 color ? vscode.CompletionItemKind.Color : vscode.CompletionItemKind.Variable,
             );
             item.sortText = String(rank).padStart(6, '0'); // VS Code sorts by this when the typed text ranks items equally
-            item.detail = value;
+            item.detail = shown;
             // VS Code draws the swatch from a color at the start of the documentation string
             // (only for #rgb/#rrggbb and comma-style rgb()/hsl(); other formats get the Color icon only).
             const doc = [
                 color ? value : '',
                 chain.length ? `${name} → ${chain.join(' → ')}` : '',
-                entries.length > 1 ? entries.map((e) => `${e.theme}: ${e.value}`).join('\n') : '',
+                entries.length > 1 ? entries.map((e) => `${e.theme}: ${withPx(e.value, px)}`).join('\n') : '',
             ].filter(Boolean);
             item.documentation = doc.length ? doc.join('\n\n') : undefined;
             item.insertText = ctx.inVar ? name : `var(${name})`;

@@ -24,4 +24,32 @@ suite('getTokenFiles', () => {
         await config().update('files', [abs], vscode.ConfigurationTarget.Workspace);
         assert.deepStrictEqual(await names(), [path.join('styles', 'extra.css')]);
     });
+
+    test('node_modules is searched only when the entry names it', async () => {
+        await config().update('files', ['node_modules/pkg/tokens.css'], vscode.ConfigurationTarget.Workspace);
+        assert.deepStrictEqual(await names(), [path.join('node_modules', 'pkg', 'tokens.css')]);
+
+        await config().update('files', ['node_modules/**/*.css'], vscode.ConfigurationTarget.Workspace);
+        assert.deepStrictEqual(await names(), [
+            path.join('node_modules', '@acme', 'design', 'css', 'dark.css'),
+            path.join('node_modules', '@acme', 'design', 'css', 'tokens.css'),
+            path.join('node_modules', 'pkg', 'tokens.css'),
+        ]);
+    });
+
+    test('package files resolve through node_modules, including globs', async () => {
+        await config().update('files', ['@acme/design/css/tokens.css'], vscode.ConfigurationTarget.Workspace);
+        assert.deepStrictEqual(await names(), [path.join('node_modules', '@acme', 'design', 'css', 'tokens.css')]);
+
+        await config().update('files', ['@acme/design/css/*.css'], vscode.ConfigurationTarget.Workspace);
+        assert.deepStrictEqual(await names(), [
+            path.join('node_modules', '@acme', 'design', 'css', 'dark.css'),
+            path.join('node_modules', '@acme', 'design', 'css', 'tokens.css'),
+        ]);
+    });
+
+    test('a package is also found in a parent folder\'s node_modules', async () => {
+        await config().update('files', ['hoisted/tokens.css', 'nope/tokens.css'], vscode.ConfigurationTarget.Workspace);
+        assert.deepStrictEqual(await names(), [path.join('..', 'node_modules', 'hoisted', 'tokens.css')]);
+    });
 });

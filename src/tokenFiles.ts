@@ -5,7 +5,31 @@ const DEFAULT_FILES = ['**/tokens.css'];
 
 const patterns = () => vscode.workspace.getConfiguration('cssTokens').get<string[]>('files', DEFAULT_FILES);
 
-/** Resolves `cssTokens.files` (globs relative to each workspace folder, or absolute paths) to unique file URIs. */
+const hasGlob = (p: string) => /[*?{[]/.test(p);
+
+/** `@scope/pkg/file.css` or `pkg/dist/*.css`: not absolute, not `./`, not `**` and no glob in the first segment. */
+const isPackageSpec = (p: string) => !/^(\*\*|\.|\/)/.test(p) && !hasGlob(p.split('/')[0]);
+
+/** Files matching `pattern` under `base`. A pattern without glob characters is checked directly, not searched for. */
+async function expand(base: vscode.Uri, pattern: string, skipNodeModules: boolean): Promise<vscode.Uri[]> {
+    if (!hasGlob(pattern)) {
+        const uri = vscode.Uri.joinPath(base, pattern);
+        try {
+            return (await vscode.workspace.fs.stat(uri)).type & vscode.FileType.File ? [uri] : [];
+        } catch {
+            return [];
+        }
+    }
+    return vscode.workspace.findFiles(new vscode.RelativePattern(base, pattern), skipNodeModules ? '**/node_modules/**' : null);
+}
+
+/**
+ * Resolves `cssTokens.files` to unique file URIs. Each entry is, in order:
+ * - an absolute path;
+ * - a path or glob relative to each workspace folder (`node_modules` is skipped unless the entry names it);
+ * - a package file such as `@acme/tokens/dist/tokens.css`, looked up like Node does: in the nearest
+ *   `node_modules` of the workspace folder or one of its parents.
+ */
 export async function getTokenFiles(): Promise<vscode.Uri[]> {
     const found = new Map<string, vscode.Uri>();
     const add = (uri: vscode.Uri) => found.set(uri.toString(), uri);
@@ -16,11 +40,18 @@ export async function getTokenFiles(): Promise<vscode.Uri[]> {
             continue;
         }
         for (const folder of vscode.workspace.workspaceFolders ?? []) {
-            const matches = await vscode.workspace.findFiles(
-                new vscode.RelativePattern(folder, pattern),
-                '**/node_modules/**',
-            );
-            matches.forEach(add);
+            (await expand(folder.uri, pattern, !pattern.includes('node_modules'))).forEach(add);
+            if (!isPackageSpec(pattern)) {
+                continue;
+            }
+            for (let dir = folder.uri, parent = dir; ; dir = parent) {
+                const hits = await expand(vscode.Uri.joinPath(dir, 'node_modules'), pattern, false);
+                parent = vscode.Uri.joinPath(dir, '..');
+                if (hits.length || parent.path === dir.path) {
+                    hits.forEach(add);
+                    break;
+                }
+            }
         }
     }
     return [...found.values()];

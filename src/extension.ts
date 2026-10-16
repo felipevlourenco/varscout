@@ -11,6 +11,10 @@ import { getTokenFiles, watchTokenFiles } from './tokenFiles';
 export function activate(context: vscode.ExtensionContext) {
     const out = vscode.window.createOutputChannel('VarScout');
     const diagnostics = startDiagnostics();
+    const reload = () => {
+        invalidateTokens();
+        diagnostics.refreshAll();
+    };
 
     context.subscriptions.push(
         out,
@@ -21,10 +25,9 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.languages.registerCodeActionsProvider(SELECTOR, hardcodedValueFixes, {
             providedCodeActionKinds: [vscode.CodeActionKind.QuickFix],
         }),
-        watchTokenFiles(() => {
-            invalidateTokens();
-            diagnostics.refreshAll();
-        }),
+        watchTokenFiles(reload),
+        // Files inside node_modules aren't watched by VS Code, so changes after an install need this.
+        vscode.commands.registerCommand('varscout.reloadTokens', reload),
         // Debug aid: dumps what the parser extracted from every configured token file.
         vscode.commands.registerCommand('varscout.showTokens', async () => {
             out.clear();
