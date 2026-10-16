@@ -1,8 +1,33 @@
 {
   "name": "varscout",
+  "publisher": "felipelourenco",
   "displayName": "VarScout",
   "description": "Autocomplete CSS custom properties from your project's CSS token files, making design tokens easier to discover and use across your codebase.",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": "Felipe Lourenco",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/felipevlourenco/varscout.git"
+  },
+  "bugs": {
+    "url": "https://github.com/felipevlourenco/varscout/issues"
+  },
+  "homepage": "https://github.com/felipevlourenco/varscout#readme",
+  "keywords": [
+    "css",
+    "css variables",
+    "custom properties",
+    "design tokens",
+    "autocomplete",
+    "intellisense",
+    "scss",
+    "less",
+    "vue",
+    "svelte",
+    "astro",
+    "styled-components"
+  ],
   "engines": {
     "vscode": "^1.140.0"
   },
@@ -69,7 +94,7 @@
     "test": "vscode-test",
     "dev": "pnpm run compile && code --new-window --extensionDevelopmentPath=\"$PWD\" test-fixtures/ws",
     "dev:multi": "pnpm run compile && code --new-window --extensionDevelopmentPath=\"$PWD\" test-fixtures/multi.code-workspace",
-    "vsix": "vsce package --no-dependencies --skip-license --allow-missing-repository"
+    "vsix": "vsce package --no-dependencies"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
