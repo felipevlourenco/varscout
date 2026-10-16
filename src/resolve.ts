@@ -37,10 +37,14 @@ function expand(value: string, onRef: (name: string, fallback: string | undefine
 }
 
 /**
- * Final value of `name` with all `var()` references substituted, plus the names it passed through
+ * Final value of `value` (a declaration of the token `self`) with all `var()` references substituted, plus the names it passed through
  * (depth-first, in discovery order). Unknown references without a fallback and cycles are left as `var(--x)`.
  */
-export function resolve(name: string, tokens: Map<string, Token>): { value: string; chain: string[] } {
+export function resolveValue(
+    value: string,
+    tokens: Map<string, Token>,
+    self: string,
+): { value: string; chain: string[] } {
     const chain: string[] = [];
     const walk = (value: string, stack: string[]): string =>
         expand(value, (ref, fallback, raw) => {
@@ -56,5 +60,8 @@ export function resolve(name: string, tokens: Map<string, Token>): { value: stri
             }
             return walk(token.value, [...stack, ref]);
         });
-    return { value: walk(tokens.get(name)?.value ?? '', [name]), chain };
+    return { value: walk(value, [self]), chain };
 }
+
+export const resolve = (name: string, tokens: Map<string, Token>) =>
+    resolveValue(tokens.get(name)?.value ?? '', tokens, name);

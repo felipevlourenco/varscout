@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { tokenCompletionProvider } from './completion';
+import { tokenHoverProvider } from './hover';
+import { SELECTOR } from './languages';
 import { invalidateTokens, readTokenFile } from './tokens';
 import { getTokenFiles, watchTokenFiles } from './tokenFiles';
 
@@ -8,12 +10,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         out,
-        vscode.languages.registerCompletionItemProvider(
-            ['css', 'scss', 'less', 'vue', 'svelte', 'astro'].map((language) => ({ language })),
-            tokenCompletionProvider,
-            '-',
-            '(',
-        ),
+        vscode.languages.registerCompletionItemProvider(SELECTOR, tokenCompletionProvider, '-', '('),
+        vscode.languages.registerHoverProvider(SELECTOR, tokenHoverProvider),
         watchTokenFiles(invalidateTokens),
         // Debug aid: dumps what the parser extracted from every configured token file.
         vscode.commands.registerCommand('varscout.showTokens', async () => {

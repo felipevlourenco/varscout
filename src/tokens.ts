@@ -6,30 +6,43 @@ export async function readTokenFile(uri: vscode.Uri): Promise<Token[]> {
     return parseTokens(new TextDecoder().decode(await vscode.workspace.fs.readFile(uri)));
 }
 
-let cache: Promise<Map<string, Token>> | undefined;
+interface Store {
+    /** First definition of each token. */
+    first: Map<string, Token>;
+    /** Every definition of each token, in source order (redefinitions under themes, media queries...). */
+    all: Map<string, Token[]>;
+}
 
-/** All tokens from the configured files, by name. Cached until `invalidateTokens()`. */
-export function getTokens(): Promise<Map<string, Token>> {
-    return (cache ??= load());
+let cache: Promise<Store> | undefined;
+
+/** The first definition of each configured token, by name. Cached until `invalidateTokens()`. */
+export async function getTokens(): Promise<Map<string, Token>> {
+    return (await (cache ??= load())).first;
+}
+
+/** Every definition of each token, by name. */
+export async function getDefinitions(): Promise<Map<string, Token[]>> {
+    return (await (cache ??= load())).all;
 }
 
 export function invalidateTokens() {
     cache = undefined;
 }
 
-async function load() {
-    const tokens = new Map<string, Token>();
+async function load(): Promise<Store> {
+    const store: Store = { first: new Map(), all: new Map() };
     for (const uri of await getTokenFiles()) {
         try {
-            // ponytail: first definition wins; per-theme values come with the theme-awareness item.
             for (const t of await readTokenFile(uri)) {
-                if (!tokens.has(t.name)) {
-                    tokens.set(t.name, t);
+                // ponytail: completion uses the first definition; hover lists all. Per-theme labels come with theme awareness.
+                if (!store.first.has(t.name)) {
+                    store.first.set(t.name, t);
                 }
+                store.all.set(t.name, [...(store.all.get(t.name) ?? []), t]);
             }
         } catch (e) {
             console.warn(`[varscout] skipping ${uri.fsPath}:`, e);
         }
     }
-    return tokens;
+    return store;
 }

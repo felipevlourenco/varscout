@@ -22,7 +22,7 @@ Read a main design-tokens CSS file (e.g. `tokens.css`) and expose its CSS custom
 - [x] **Languages**: CSS, SCSS, Less, and `<style>` blocks in Vue / Svelte / Astro
 
 ## Phase 2
-- [ ] **Hover**: hovering `var(--x)` shows its value (all theme values if several)
+- [x] **Hover**: hovering `var(--x)` shows its value (all theme values if several)
 - [ ] **Go to definition**: Cmd/Ctrl+click jumps to the token's declaration
 - [ ] **Theme awareness**: tokens redefined under `[data-theme="dark"]`, `.dark`, etc. show a value per theme
 - [ ] **Diagnostics**: warn on `--var` usages that don't exist in the token files

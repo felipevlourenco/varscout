@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { completionContext, inStyleBlock, isColor } from '../completion';
+import { completionContext, isColor } from '../completion';
+import { inStyleBlock } from '../languages';
 
 suite('completionContext', () => {
     test('offers inside var( and on -- words in value position', () => {
