@@ -31,12 +31,17 @@ export function activate(context: vscode.ExtensionContext) {
         // Debug aid: dumps what the parser extracted from every configured token file.
         vscode.commands.registerCommand('varscout.showTokens', async () => {
             out.clear();
-            for (const uri of await getTokenFiles()) {
-                out.appendLine(`# ${vscode.workspace.asRelativePath(uri)}`);
-                try {
-                    (await readTokenFile(uri)).forEach((t) => out.appendLine(`${t.name}: ${t.value}`));
-                } catch (e) {
-                    out.appendLine(`! parse error: ${e instanceof Error ? e.message : e}`);
+            for (const folder of vscode.workspace.workspaceFolders ?? [undefined]) {
+                if (folder && vscode.workspace.workspaceFolders!.length > 1) {
+                    out.appendLine(`## ${folder.name}`);
+                }
+                for (const uri of await getTokenFiles(folder)) {
+                    out.appendLine(`# ${vscode.workspace.asRelativePath(uri)}`);
+                    try {
+                        (await readTokenFile(uri)).forEach((t) => out.appendLine(`${t.name}: ${t.value}`));
+                    } catch (e) {
+                        out.appendLine(`! parse error: ${e instanceof Error ? e.message : e}`);
+                    }
                 }
             }
             out.show(true);

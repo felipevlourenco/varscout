@@ -27,7 +27,7 @@ export function startDiagnostics(): vscode.Disposable & { refreshAll(): void } {
         if (!['file', 'untitled'].includes(doc.uri.scheme) || vscode.languages.match(SELECTOR, doc) === 0) {
             return;
         }
-        const known = await getDefinitions();
+        const known = await getDefinitions(doc.uri);
         if (!known.size) {
             collection.delete(doc.uri); // no token files found: everything would look unknown
             return;

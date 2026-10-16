@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 
-/** The px size of 1rem: `cssTokens.rootFontSize` (default 16). */
-export const rootFontSize = () => vscode.workspace.getConfiguration('cssTokens').get<number>('rootFontSize', 16);
+/** The px size of 1rem: `cssTokens.rootFontSize` (default 16), as set for the folder of `uri`. */
+export const rootFontSize = (uri?: vscode.Uri) =>
+    vscode.workspace.getConfiguration('cssTokens', uri).get<number>('rootFontSize', 16);
 
 /**
  * Adds the px equivalent after each top-level `rem` length: `1.5rem` -> `1.5rem (24px)`.

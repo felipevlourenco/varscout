@@ -11,13 +11,13 @@ export const tokenHoverProvider: vscode.HoverProvider = {
             return undefined;
         }
         const { name, range } = usage;
-        const entries = themeValues(name, await getThemes());
+        const entries = themeValues(name, await getThemes(document.uri));
         if (!entries.length) {
             return undefined;
         }
         // Label every line when there's more than one value or the only one isn't the default.
         const labelled = entries.length > 1 || entries[0].theme !== 'default';
-        const px = rootFontSize();
+        const px = rootFontSize(document.uri);
         const md = new vscode.MarkdownString();
         md.appendCodeblock(entries.map((e) => `${name}: ${withPx(e.value, px)};${labelled ? ` /* ${e.theme} */` : ''}`).join('\n'), 'css');
         if (entries[0].chain.length) {

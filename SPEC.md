@@ -33,7 +33,7 @@ Read a main design-tokens CSS file (e.g. `tokens.css`) and expose its CSS custom
 - [x] Show px equivalent for rem values, e.g. `1.5rem (24px)`
 - [x] Support token files from `node_modules` (design system shipped as a package)
 - [x] Support CSS-in-JS and TS/TSX (styled-components, inline `style`)
-- [ ] Multi-root workspaces, each with its own token files
+- [x] Multi-root workspaces, each with its own token files
 - [ ] Cache parsed results for large token files
 
 ## Differentiators vs existing extensions (e.g. "CSS Variable Autocomplete")

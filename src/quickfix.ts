@@ -65,13 +65,13 @@ export const hardcodedValueFixes: vscode.CodeActionProvider = {
         if (!inDeclarations(document, range.start)) {
             return undefined;
         }
-        const themes = await getThemes();
+        const themes = await getThemes(document.uri);
         const byValue = new Map<string, string[]>();
         for (const name of themes.get('default')!.keys()) {
             const key = normalizeValue(themeValues(name, themes)[0].value);
             byValue.set(key, [...(byValue.get(key) ?? []), name]);
         }
-        const tokens = await getTokens();
+        const tokens = await getTokens(document.uri);
 
         const actions: vscode.CodeAction[] = [];
         const last = Math.min(range.end.line, range.start.line + MAX_LINES);

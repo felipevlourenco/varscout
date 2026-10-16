@@ -77,8 +77,8 @@ export const tokenCompletionProvider: vscode.CompletionItemProvider = {
             return undefined;
         }
         const range = new vscode.Range(position.line, ctx.start, position.line, position.character);
-        const themes = await getThemes();
-        const px = rootFontSize();
+        const themes = await getThemes(document.uri);
+        const px = rootFontSize(document.uri);
         return sortTokens([...themes.get('default')!.keys()]).map((name, rank) => {
             const entries = themeValues(name, themes);
             const { value, chain } = entries[0];

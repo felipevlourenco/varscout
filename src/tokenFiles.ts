@@ -3,7 +3,9 @@ import * as vscode from 'vscode';
 
 const DEFAULT_FILES = ['**/tokens.css'];
 
-const patterns = () => vscode.workspace.getConfiguration('cssTokens').get<string[]>('files', DEFAULT_FILES);
+/** `cssTokens.files` as set for `folder` (a folder's own `.vscode/settings.json` can override the workspace's). */
+const patterns = (folder?: vscode.WorkspaceFolder) =>
+    vscode.workspace.getConfiguration('cssTokens', folder?.uri).get<string[]>('files', DEFAULT_FILES);
 
 const hasGlob = (p: string) => /[*?{[]/.test(p);
 
@@ -24,22 +26,20 @@ async function expand(base: vscode.Uri, pattern: string, skipNodeModules: boolea
 }
 
 /**
- * Resolves `cssTokens.files` to unique file URIs. Each entry is, in order:
+ * Resolves `cssTokens.files` of one workspace folder (default: the first) to unique file URIs. Each entry is, in order:
  * - an absolute path;
  * - a path or glob relative to each workspace folder (`node_modules` is skipped unless the entry names it);
  * - a package file such as `@acme/tokens/dist/tokens.css`, looked up like Node does: in the nearest
  *   `node_modules` of the workspace folder or one of its parents.
  */
-export async function getTokenFiles(): Promise<vscode.Uri[]> {
+export async function getTokenFiles(folder = vscode.workspace.workspaceFolders?.[0]): Promise<vscode.Uri[]> {
     const found = new Map<string, vscode.Uri>();
     const add = (uri: vscode.Uri) => found.set(uri.toString(), uri);
 
-    for (const pattern of patterns()) {
+    for (const pattern of patterns(folder)) {
         if (path.isAbsolute(pattern)) {
             add(vscode.Uri.file(pattern));
-            continue;
-        }
-        for (const folder of vscode.workspace.workspaceFolders ?? []) {
+        } else if (folder) {
             (await expand(folder.uri, pattern, !pattern.includes('node_modules'))).forEach(add);
             if (!isPackageSpec(pattern)) {
                 continue;
@@ -58,19 +58,24 @@ export async function getTokenFiles(): Promise<vscode.Uri[]> {
 }
 
 /**
- * Calls `onChange` when a token file is created, changed or deleted, and when the setting or
- * the workspace folders change (watchers are rebuilt for the new patterns).
+ * Calls `onChange` when a token file of any workspace folder is created, changed or deleted, and when
+ * the setting or the workspace folders change (watchers are rebuilt for the new patterns).
  * Only saved changes are seen: unsaved edits in an open token file don't count.
  */
 export function watchTokenFiles(onChange: () => void): vscode.Disposable {
     let watchers: vscode.FileSystemWatcher[] = [];
     const rebuild = () => {
         watchers.forEach((w) => w.dispose());
-        watchers = patterns()
-            .flatMap((pattern) =>
-                path.isAbsolute(pattern)
-                    ? [new vscode.RelativePattern(vscode.Uri.file(path.dirname(pattern)), path.basename(pattern))]
-                    : (vscode.workspace.workspaceFolders ?? []).map((f) => new vscode.RelativePattern(f, pattern)),
+        const folders = vscode.workspace.workspaceFolders ?? [undefined];
+        watchers = folders
+            .flatMap((folder) =>
+                patterns(folder).flatMap((pattern) =>
+                    path.isAbsolute(pattern)
+                        ? [new vscode.RelativePattern(vscode.Uri.file(path.dirname(pattern)), path.basename(pattern))]
+                        : folder
+                          ? [new vscode.RelativePattern(folder, pattern)]
+                          : [],
+                ),
             )
             .map((glob) => {
                 const w = vscode.workspace.createFileSystemWatcher(glob);

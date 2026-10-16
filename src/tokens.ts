@@ -18,30 +18,43 @@ interface Store {
     themes: ThemeMaps<Definition>;
 }
 
-let cache: Promise<Store> | undefined;
-const store = () => (cache ??= load());
+const stores = new Map<string, Promise<Store>>();
 
-/** The no-theme definition of each token, by name. Cached until `invalidateTokens()`. */
-export async function getTokens(): Promise<Map<string, Token>> {
-    return (await store()).themes.get('default')!;
+/** The workspace folder `uri` is in; files outside any folder (and untitled documents) use the first folder. */
+const folderFor = (uri?: vscode.Uri) => (uri && vscode.workspace.getWorkspaceFolder(uri)) || vscode.workspace.workspaceFolders?.[0];
+
+/** Tokens are per workspace folder, since each folder can configure its own token files. */
+function store(uri?: vscode.Uri) {
+    const folder = folderFor(uri);
+    const key = folder?.uri.toString() ?? '';
+    let s = stores.get(key);
+    if (!s) {
+        stores.set(key, (s = load(folder)));
+    }
+    return s;
 }
 
-/** Every definition of each token, by name. */
-export async function getDefinitions(): Promise<Map<string, Definition[]>> {
-    return (await store()).all;
+/** The no-theme definition of each token available to the file `uri`, by name. Cached until `invalidateTokens()`. */
+export async function getTokens(uri?: vscode.Uri): Promise<Map<string, Token>> {
+    return (await store(uri)).themes.get('default')!;
 }
 
-export async function getThemes(): Promise<ThemeMaps> {
-    return (await store()).themes;
+/** Every definition of each token available to the file `uri`, by name. */
+export async function getDefinitions(uri?: vscode.Uri): Promise<Map<string, Definition[]>> {
+    return (await store(uri)).all;
+}
+
+export async function getThemes(uri?: vscode.Uri): Promise<ThemeMaps> {
+    return (await store(uri)).themes;
 }
 
 export function invalidateTokens() {
-    cache = undefined;
+    stores.clear();
 }
 
-async function load(): Promise<Store> {
+async function load(folder?: vscode.WorkspaceFolder): Promise<Store> {
     const all = new Map<string, Definition[]>();
-    for (const uri of await getTokenFiles()) {
+    for (const uri of await getTokenFiles(folder)) {
         try {
             for (const token of await readTokenFile(uri)) {
                 all.set(token.name, [...(all.get(token.name) ?? []), { ...token, uri }]);

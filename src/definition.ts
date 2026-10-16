@@ -9,7 +9,7 @@ export const tokenDefinitionProvider: vscode.DefinitionProvider = {
         if (!usage) {
             return undefined;
         }
-        const definitions = (await getDefinitions()).get(usage.name) ?? [];
+        const definitions = (await getDefinitions(document.uri)).get(usage.name) ?? [];
         return definitions.map<vscode.LocationLink>((d) => {
             const target = new vscode.Range(d.line, d.column, d.line, d.column + d.name.length);
             return {
