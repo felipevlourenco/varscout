@@ -71,6 +71,16 @@ suite('diagnostics', () => {
         assert.deepStrictEqual(await flagged('// var(--ghost)\na { color: var(--nope) }', 'scss'), ['--nope']);
     });
 
+    test('in TS/TSX, var() in strings and templates is checked; style objects and setProperty count as declarations', async () => {
+        const code = [
+            "const s = { color: 'var(--nope)', background: 'var(--primary)' };",
+            'const A = styled.div`color: var(--nope2);`;',
+            "el.style.setProperty('--dyn', '1');",
+            "const t = { '--obj': 1, width: 'var(--obj)', height: 'var(--dyn)' }; // var(--ghost)",
+        ].join('\n');
+        assert.deepStrictEqual(await flagged(code, 'typescriptreact'), ['--nope', '--nope2']);
+    });
+
     test('follows the token files: changing the setting re-checks open documents', async () => {
         const doc = await vscode.workspace.openTextDocument({ language: 'css', content: 'a { color: var(--primary); }' });
         await vscode.window.showTextDocument(doc);

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { isColor } from './completion';
-import { inCss } from './languages';
+import { inDeclarations } from './languages';
 import { themeValues } from './themes';
 import { getThemes, getTokens } from './tokens';
 
@@ -62,7 +62,7 @@ const MAX_PER_VALUE = 5;
 /** Offers to replace a hardcoded value under the cursor / selection with a token that resolves to the same value. */
 export const hardcodedValueFixes: vscode.CodeActionProvider = {
     async provideCodeActions(document, range) {
-        if (!inCss(document, range.start)) {
+        if (!inDeclarations(document, range.start)) {
             return undefined;
         }
         const themes = await getThemes();

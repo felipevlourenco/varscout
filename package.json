@@ -15,7 +15,11 @@
     "onLanguage:less",
     "onLanguage:vue",
     "onLanguage:svelte",
-    "onLanguage:astro"
+    "onLanguage:astro",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact"
   ],
   "main": "./dist/extension.js",
   "contributes": {

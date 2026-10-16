@@ -42,15 +42,18 @@ suite('hardcoded value quick fix', () => {
     suiteSetup(() => vscode.extensions.all.find((e) => e.packageJSON.name === 'varscout')!.activate());
 
     /** Our quick fixes at the middle of `target` in `content`. */
-    const fixes = async (content: string, target: string) => {
-        const doc = await vscode.workspace.openTextDocument({ language: 'css', content });
+    const fixes = async (content: string, target: string, language = 'css') => {
+        const doc = await vscode.workspace.openTextDocument({ language, content });
         const at = doc.positionAt(content.indexOf(target) + 1);
-        const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>(
-            'vscode.executeCodeActionProvider',
-            doc.uri,
-            new vscode.Range(at, at),
-            vscode.CodeActionKind.QuickFix.value,
-        );
+        const run = () =>
+            vscode.commands.executeCommand<vscode.CodeAction[]>(
+                'vscode.executeCodeActionProvider',
+                doc.uri,
+                new vscode.Range(at, at),
+                vscode.CodeActionKind.QuickFix.value,
+            );
+        // The built-in TypeScript server sometimes cancels the combined request while it starts up; retry.
+        const actions = await run().then(undefined, () => new Promise((r) => setTimeout(r, 300)).then(run));
         return { doc, actions: actions.filter((a) => a.title.startsWith('Replace ') && a.title.includes(' with var(')) };
     };
 
@@ -84,5 +87,14 @@ suite('hardcoded value quick fix', () => {
         assert.deepStrictEqual((await fixes('a { color: #123456; }', '#123456')).actions, []);
         assert.deepStrictEqual((await fixes('a { --mine: #3b82f6; }', '#3b82f6')).actions, []);
         assert.deepStrictEqual((await fixes('a { color: #3b82f6; width: 5px; }', 'width')).actions, []);
+    });
+
+    test('in TS/TSX only inside styled templates', async () => {
+        const { doc, actions } = await fixes('const A = styled.div`\n  color: #3b82f6;\n`;', '#3b82f6', 'typescriptreact');
+        assert.strictEqual(actions[0].title, 'Replace #3b82f6 with var(--blue-500)');
+        await vscode.workspace.applyEdit(actions[0].edit!);
+        assert.strictEqual(doc.getText(), 'const A = styled.div`\n  color: var(--blue-500);\n`;');
+
+        assert.deepStrictEqual((await fixes('const a = 1;\n// padding: 1rem;', '1rem', 'typescript')).actions, []);
     });
 });

@@ -188,6 +188,28 @@ suite('token completion provider', () => {
         }
     });
 
+    test('in TS/TSX, styled-components templates are CSS', async () => {
+        const language = 'typescriptreact';
+        assert.strictEqual((await complete('const A = styled.div`\n  color: var(', language)).get('--primary')?.insertText, '--primary');
+        assert.ok((await complete('const A = styled.div`color: var(', language)).has('--primary'));
+        assert.ok((await complete('const A = styled.div`color: ${(p) => p.c};\n  background: var(', language)).has('--primary'));
+        assert.strictEqual(
+            (await complete('const A = styled.button`\n  background: --pri', language)).get('--primary')?.insertText,
+            'var(--primary)',
+        );
+        assert.ok(!(await complete('const A = styled.div`\n  --my', language)).has('--primary')); // declaring a property
+    });
+
+    test('in TS/TSX outside templates, only var( inside a string is completed', async () => {
+        const language = 'typescript';
+        assert.strictEqual((await complete("const s = { color: 'var(", language)).get('--primary')?.insertText, '--primary');
+        assert.ok((await complete('const s = <div style={{ color: "var(--pri', 'typescriptreact')).has('--primary'));
+        assert.ok(!(await complete('const y = var(', language)).has('--primary'));
+        assert.ok(!(await complete('const z = --pri', language)).has('--primary'));
+        assert.ok(!(await complete('const t = `--pri', language)).has('--primary'));
+        assert.ok(!(await complete('const A = html`<p>${x}</p>` + var(', language)).has('--primary'));
+    });
+
     test('also triggers on a -- word', async () => {
         assert.ok((await complete('a { color: --pri')).has('--primary'));
     });

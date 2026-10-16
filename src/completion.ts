@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { inCss } from './languages';
+import { inCss, SCRIPT, templateRegionAt } from './languages';
 import { rootFontSize, withPx } from './rem';
 import { themeValues } from './themes';
 import { getThemes } from './tokens';
@@ -20,6 +20,42 @@ export function completionContext(linePrefix: string): { start: number; inVar: b
     return /(^|[{;])\s*$/.test(linePrefix.slice(0, start)) ? undefined : { start, inVar: !!inVar };
 }
 
+/** Whether `text` ends inside an unclosed '...', "..." or `...` string. */
+function endsInString(text: string): boolean {
+    let quote = '';
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (c === '\\') {
+            i++;
+        } else if (quote) {
+            quote = c === quote ? '' : quote;
+        } else if (c === "'" || c === '"' || c === '`') {
+            quote = c;
+        }
+    }
+    return !!quote;
+}
+
+/**
+ * Like `completionContext` for the position in `document`. In scripts, tokens are offered inside styled-components
+ * style templates (any CSS context) and inside `var(` in any string, such as `style={{ color: 'var(--x)' }}`.
+ */
+export function contextAt(document: vscode.TextDocument, position: vscode.Position) {
+    const line = document.lineAt(position).text.slice(0, position.character);
+    if (!SCRIPT.includes(document.languageId)) {
+        return inCss(document, position) ? completionContext(line) : undefined;
+    }
+    const region = templateRegionAt(document, position);
+    if (region) {
+        const from = document.positionAt(region.start);
+        const column = from.line === position.line ? from.character : 0;
+        const ctx = completionContext(line.slice(column));
+        return ctx && { ...ctx, start: ctx.start + column };
+    }
+    const inVar = /var\(\s*([\w-]*)$/.exec(line);
+    return inVar && endsInString(line) ? { start: line.length - inVar[1].length, inVar: true } : undefined;
+}
+
 export const isColor = (value: string) =>
     /^(#[\da-f]{3,8}|(rgb|hsl|hwb|lab|lch|oklab|oklch|color)a?\(.*\))$/i.test(value);
 
@@ -36,8 +72,8 @@ export function sortTokens(names: string[]): string[] {
 
 export const tokenCompletionProvider: vscode.CompletionItemProvider = {
     async provideCompletionItems(document, position) {
-        const ctx = completionContext(document.lineAt(position).text.slice(0, position.character));
-        if (!ctx || !inCss(document, position)) {
+        const ctx = contextAt(document, position);
+        if (!ctx) {
             return undefined;
         }
         const range = new vscode.Range(position.line, ctx.start, position.line, position.character);

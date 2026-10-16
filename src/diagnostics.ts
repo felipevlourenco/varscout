@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { cssRegions, SELECTOR } from './languages';
+import { cssRegions, SCRIPT, SELECTOR } from './languages';
 import { getDefinitions } from './tokens';
 
 const blank = (css: string, lineComments: boolean) =>
@@ -12,7 +12,10 @@ export function scanVars(css: string, lineComments = false) {
         name: m[1],
         index: m.index + m[0].length - m[1].length,
     }));
-    const declared = new Set([...text.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
+    // `--x:` in CSS, `'--x':` in style objects, `style.setProperty('--x', ...)` in scripts.
+    const declared = new Set(
+        [...text.matchAll(/(--[\w-]+)['"]?\s*:|setProperty\(\s*['"`](--[\w-]+)/g)].map((m) => m[1] ?? m[2]),
+    );
     return { usages, declared };
 }
 
@@ -30,7 +33,7 @@ export function startDiagnostics(): vscode.Disposable & { refreshAll(): void } {
             return;
         }
         const text = doc.getText();
-        const lineComments = ['scss', 'less'].includes(doc.languageId);
+        const lineComments = ['scss', 'less', ...SCRIPT].includes(doc.languageId);
         const declared = new Set<string>();
         const usages: { name: string; index: number }[] = [];
         for (const { start, end } of cssRegions(text, doc.languageId)) {

@@ -5,8 +5,8 @@ suite('token hover', () => {
     suiteSetup(() => vscode.extensions.all.find((e) => e.packageJSON.name === 'varscout')!.activate());
 
     /** Hover text at the middle of `target` in `content` (other providers' hovers are included, so callers match on substrings). */
-    const hover = async (content: string, target: string) => {
-        const doc = await vscode.workspace.openTextDocument({ language: 'css', content });
+    const hover = async (content: string, target: string, language = 'css') => {
+        const doc = await vscode.workspace.openTextDocument({ language, content });
         const hovers = await vscode.commands.executeCommand<vscode.Hover[]>(
             'vscode.executeHoverProvider',
             doc.uri,
@@ -42,5 +42,16 @@ suite('token hover', () => {
     test('nothing for unknown tokens or outside var()', async () => {
         assert.ok(!(await hover('a { color: var(--nope); }', '--nope')).includes('--nope:'));
         assert.ok(!(await hover('a { --primary: red; }', '--primary')).includes('#3b82f6'));
+    });
+
+    test('works for var() in TS/TSX strings and styled templates', async () => {
+        assert.ok(
+            (await hover("const s = { color: 'var(--primary)' };", '--primary', 'typescript')).includes('--primary: #3b82f6;'),
+        );
+        assert.ok(
+            (await hover('const A = styled.div`\n  color: var(--primary);\n`;', '--primary', 'typescriptreact')).includes(
+                '--primary: #3b82f6;',
+            ),
+        );
     });
 });
