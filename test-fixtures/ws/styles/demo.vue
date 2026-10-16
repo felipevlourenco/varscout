@@ -1,6 +1,6 @@
 <template>
-  <!-- No tokens should be offered here: <p style="color: var(  -->
-  <p class="btn">Hello</p>
+    <!-- No tokens should be offered here: <p style="color: var(  -->
+    <p class="btn">Hello</p>
 </template>
 
 <script>
@@ -10,6 +10,6 @@
 <style scoped>
 /* Tokens should be offered here: */
 .btn {
-  color:
+    color: var(--accent);
 }
 </style>

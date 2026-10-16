@@ -1,20 +1,15 @@
 import * as vscode from 'vscode';
-import { inCss } from './languages';
 import { resolveValue } from './resolve';
 import { getDefinitions, getTokens } from './tokens';
+import { varNameAt } from './usage';
 
 export const tokenHoverProvider: vscode.HoverProvider = {
     async provideHover(document, position) {
-        const range = document.getWordRangeAtPosition(position, /--[\w-]+/);
-        if (!range || !inCss(document, position)) {
+        const usage = varNameAt(document, position);
+        if (!usage) {
             return undefined;
         }
-        // Only usages: the name must be the first argument of a `var(`.
-        const before = document.lineAt(range.start).text.slice(0, range.start.character);
-        if (!/var\(\s*$/.test(before)) {
-            return undefined;
-        }
-        const name = document.getText(range);
+        const { name, range } = usage;
         const definitions = (await getDefinitions()).get(name);
         if (!definitions) {
             return undefined;
