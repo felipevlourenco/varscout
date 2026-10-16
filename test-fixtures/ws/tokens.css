@@ -1,5 +1,6 @@
 /* Sample design tokens */
 :root {
+    --primry: red;
     --blue-500: #3b82f6;
     --primary: var(--blue-500);
     --space-4: 1rem; /* inline comment */
@@ -24,7 +25,7 @@
     --ring: 0 0 0 2px var(--primary);
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
     --text: rgb(229, 231, 235);
 }
 

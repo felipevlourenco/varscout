@@ -10,3 +10,11 @@
   box-shadow: var(--ring);
   border-color: var(--does-not-exist);
 }
+
+/* Diagnostics test: the typo below should get a warning, the others not */
+.oops {
+  --local: 4px;
+  padding: var(--local);
+  color: var(--primry);
+  background: var(--primary);
+}

@@ -1,0 +1,85 @@
+import * as assert from 'assert';
+import * as vscode from 'vscode';
+import { scanVars } from '../diagnostics';
+import { cssRegions } from '../languages';
+
+suite('scanVars', () => {
+    test('finds usages and declarations, ignoring comments', () => {
+        const css = `a { --local: 1px; width: var(--local); height: var( --h , 1px); /* var(--ghost) */ }`;
+        const { usages, declared } = scanVars(css);
+        assert.deepStrictEqual(usages.map((u) => [u.name, css.slice(u.index, u.index + u.name.length)]), [
+            ['--local', '--local'],
+            ['--h', '--h'],
+        ]);
+        assert.deepStrictEqual([...declared], ['--local']);
+    });
+
+    test('line comments only count for scss/less', () => {
+        const css = `// var(--ghost)\na { color: var(--real); background: url(http://x/y.png) }`;
+        assert.deepStrictEqual(scanVars(css, true).usages.map((u) => u.name), ['--real']);
+        assert.deepStrictEqual(scanVars(css).usages.map((u) => u.name), ['--ghost', '--real']);
+    });
+});
+
+suite('cssRegions', () => {
+    test('whole text, or only <style> contents for vue/svelte/astro', () => {
+        assert.deepStrictEqual(cssRegions('abc', 'css'), [{ start: 0, end: 3 }]);
+        const vue = '<p/><style scoped>a{}</style><script>x</script><style>b{}</style>';
+        assert.deepStrictEqual(
+            cssRegions(vue, 'vue').map((r) => vue.slice(r.start, r.end)),
+            ['a{}', 'b{}'],
+        );
+        assert.deepStrictEqual(cssRegions('<p style="color: var(--x)"/>', 'vue'), []);
+    });
+});
+
+suite('diagnostics', () => {
+    suiteSetup(() => vscode.extensions.all.find((e) => e.packageJSON.name === 'varscout')!.activate());
+
+    const config = () => vscode.workspace.getConfiguration('cssTokens');
+    teardown(() => config().update('files', undefined, vscode.ConfigurationTarget.Workspace));
+
+    const ours = (uri: vscode.Uri) => vscode.languages.getDiagnostics(uri).filter((d) => d.source === 'VarScout');
+
+    /** Polls until `cond` holds for the diagnostics of `uri`; they are computed asynchronously. */
+    const until = async (uri: vscode.Uri, cond: (d: vscode.Diagnostic[]) => boolean) => {
+        for (let i = 0; i < 50; i++) {
+            if (cond(ours(uri))) {
+                return ours(uri);
+            }
+            await new Promise((r) => setTimeout(r, 100));
+        }
+        assert.fail(`diagnostics never matched; got ${JSON.stringify(ours(uri).map((d) => d.message))}`);
+    };
+
+    /** Names flagged in `content`. A known-bad sentinel is appended so we know the update has run. */
+    const flagged = async (content: string, language = 'css') => {
+        const doc = await vscode.workspace.openTextDocument({ language, content: `${content}\n.x { color: var(--sentinel) }` });
+        const diags = await until(doc.uri, (d) => d.some((x) => x.message.includes('--sentinel')));
+        return diags.map((d) => doc.getText(d.range)).filter((n) => n !== '--sentinel');
+    };
+
+    test('warns on unknown tokens, not on tokens from the token files', async () => {
+        assert.deepStrictEqual(await flagged('a { color: var(--primary); background: var(--nope); }'), ['--nope']);
+    });
+
+    test('skips names declared in the same file and commented-out usages', async () => {
+        assert.deepStrictEqual(await flagged('a { --local: 1px; width: var(--local); /* var(--ghost) */ }'), []);
+    });
+
+    test('works in SCSS (Vue/Svelte/Astro <style> handling is covered by the cssRegions test)', async () => {
+        assert.deepStrictEqual(await flagged('// var(--ghost)\na { color: var(--nope) }', 'scss'), ['--nope']);
+    });
+
+    test('follows the token files: changing the setting re-checks open documents', async () => {
+        const doc = await vscode.workspace.openTextDocument({ language: 'css', content: 'a { color: var(--primary); }' });
+        await vscode.window.showTextDocument(doc);
+        await config().update('files', ['styles/extra.css'], vscode.ConfigurationTarget.Workspace);
+        const diags = await until(doc.uri, (d) => d.length === 1);
+        assert.strictEqual(doc.getText(diags[0].range), '--primary');
+
+        // No token files at all: everything would look unknown, so nothing is reported.
+        await config().update('files', ['nothing/*.css'], vscode.ConfigurationTarget.Workspace);
+        await until(doc.uri, (d) => d.length === 0);
+    });
+});
