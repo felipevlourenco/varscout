@@ -2,6 +2,11 @@
 
 All notable changes to the "varscout" extension are documented in this file.
 
+## [0.1.1]
+
+- Add the extension icon
+- Add screenshots and a demo GIF to the README
+
 ## [0.1.0]
 
 First release.
