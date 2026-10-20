@@ -55,7 +55,7 @@ Hover the token name inside `var(--x)` to see its resolved value, the reference 
 
 ### Go to definition
 
-Cmd/Ctrl+click on the token name inside `var(--x)` jumps to where it is declared. If it is declared more than once (for example once per theme), VS Code shows all declarations.
+Cmd/Ctrl+click on the token name inside `var(--x)` jumps to where it is declared. For a name that isn't in a token file but is declared elsewhere in the workspace (say, in a JSX style object), it jumps there. If it is declared more than once (for example once per theme), VS Code shows all declarations.
 
 ### Themes
 
@@ -75,10 +75,14 @@ Themes are resolved as a whole: if only `--blue-500` is redefined in `.dark`, th
 `var(--x)` where `--x` is in none of your token files gets a warning: `Unknown CSS variable "--x"`. Not reported:
 
 - names declared in the same file (`--local: 4px; … var(--local)`);
+- names declared anywhere else in the workspace outside the token files: another stylesheet, a JSX style object (`style={{ '--x': 1 }}`), `style.setProperty('--x', …)`. Only saved files count, and `node_modules` isn't scanned;
 - usages inside comments;
 - everything, when no token files are found at all (so a wrong `cssTokens.files` doesn't flood the file with warnings).
 
-In JS/TS, names set with `style.setProperty('--x', …)` or a `'--x':` style-object key count as declared.
+
+### Find unused tokens
+
+Run **VarScout: Show Unused Tokens** to list the tokens that nothing in the workspace refers to, grouped by token file. Pick one to open its declaration. A token counts as used if any CSS, SCSS, Less, Vue, Svelte, Astro, JS or TS file has `var(--x)` or `getPropertyValue('--x')`, or if another token's value references it. `node_modules` isn't searched, so a package's tokens used only by code inside `node_modules` show as unused.
 
 ### Quick fix: hardcoded value → token
 
@@ -133,6 +137,7 @@ Each workspace folder has its own token files and tokens. A file sees only the t
 | Command | What it does |
 | --- | --- |
 | **VarScout: Reload Tokens** | Re-reads all token files and re-checks open files. Use it after installing or updating a package, because VS Code doesn't watch `node_modules`. |
+| **VarScout: Show Unused Tokens** | Lists the tokens that no file in the workspace refers to (`var(--x)` or `getPropertyValue('--x')`, `node_modules` excluded), grouped by token file. Pick one to open its declaration. A token only used by the value of another token counts as used. |
 | **VarScout: Show Parsed Tokens** | Lists what was parsed from each token file (per folder) in the Output panel. Useful to check that your `cssTokens.files` setting finds the right files. |
 
 ## How it works
@@ -147,7 +152,8 @@ Each workspace folder has its own token files and tokens. A file sees only the t
 - Only **saved** changes to a token file are picked up, not unsaved edits.
 - Files inside `node_modules` aren't watched by VS Code. Run **VarScout: Reload Tokens** after updating a package.
 - Any condition counts as a "theme", so `@media (min-width: 40em)` is listed like a dark theme would be.
-- Warnings are given for variables set at runtime from JavaScript in ways VarScout can't see. Add the file that declares them to `cssTokens.files`, or declare them with `setProperty`.
+- Warnings are given for variables set at runtime from JavaScript in ways VarScout can't see (not as a `'--x':` key or a `setProperty` call).
+- Declarations in other files are seen only after they are saved; the workspace scan skips `node_modules` and files over 1 MB.
 - VS Code's own CSS support also suggests the variables declared in the current file, so you may see some names twice. This extension can't turn that off.
 - The Vue, Svelte, Astro and CSS-in-JS handling is lightweight: it finds `<style>` blocks and the template tags listed above, not every possible syntax (e.g. `<style jsx>`).
 
@@ -174,6 +180,7 @@ Source layout (`src/`):
 | `tokenFiles.ts` | Resolves `cssTokens.files` and watches the files |
 | `parser.ts` | PostCSS parsing of token files |
 | `tokens.ts` | Per-folder token store and parse cache |
+| `workspaceVars.ts`, `unused.ts` | Scan of declarations and usages across the workspace, and the unused tokens command |
 | `resolve.ts`, `themes.ts` | `var()` resolution and per-theme values |
 | `completion.ts`, `hover.ts`, `definition.ts`, `diagnostics.ts`, `quickfix.ts` | The editor features |
 | `languages.ts`, `usage.ts` | Where CSS can appear in each language, and `var(--x)` detection |

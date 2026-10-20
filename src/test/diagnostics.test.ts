@@ -81,12 +81,19 @@ suite('diagnostics', () => {
         assert.deepStrictEqual(await flagged(code, 'typescriptreact'), ['--nope', '--nope2']);
     });
 
+    test('does not warn on names declared elsewhere in the workspace (e.g. a JSX style object)', async () => {
+        assert.deepStrictEqual(await flagged('a { margin: var(--dynamic-offset); padding: var(--nope); }'), ['--nope']);
+    });
+
     test('follows the token files: changing the setting re-checks open documents', async () => {
-        const doc = await vscode.workspace.openTextDocument({ language: 'css', content: 'a { color: var(--primary); }' });
+        // `--c` lives only in a node_modules token file, which the workspace scan never reads.
+        await config().update('files', ['node_modules/pkg/tokens.css'], vscode.ConfigurationTarget.Workspace);
+        const doc = await vscode.workspace.openTextDocument({ language: 'css', content: 'a { color: var(--c); }' });
         await vscode.window.showTextDocument(doc);
+        await until(doc.uri, (d) => d.length === 0);
         await config().update('files', ['styles/extra.css'], vscode.ConfigurationTarget.Workspace);
         const diags = await until(doc.uri, (d) => d.length === 1);
-        assert.strictEqual(doc.getText(diags[0].range), '--primary');
+        assert.strictEqual(doc.getText(diags[0].range), '--c');
 
         // No token files at all: everything would look unknown, so nothing is reported.
         await config().update('files', ['nothing/*.css'], vscode.ConfigurationTarget.Workspace);

@@ -2,6 +2,11 @@
 
 All notable changes to the "varscout" extension are documented in this file.
 
+## [1.0.0]
+
+- New command **VarScout: Show Unused Tokens** lists the tokens that no file in the workspace refers to; pick one to open its declaration
+- `var(--x)` is no longer reported as unknown when `--x` is declared elsewhere in the workspace (a stylesheet, a JSX style object, `setProperty`), and Go to Definition jumps to that declaration
+
 ## [0.1.1]
 
 - Add the extension icon

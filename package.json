@@ -4,7 +4,7 @@
   "displayName": "VarScout",
   "icon": "images/icon.png",
   "description": "Autocomplete CSS custom properties from your project's CSS token files, making design tokens easier to discover and use across your codebase.",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "license": "MIT",
   "author": "Felipe Lourenco",
   "repository": {
@@ -76,6 +76,10 @@
       {
         "command": "varscout.showTokens",
         "title": "VarScout: Show Parsed Tokens"
+      },
+      {
+        "command": "varscout.showUnusedTokens",
+        "title": "VarScout: Show Unused Tokens"
       },
       {
         "command": "varscout.reloadTokens",

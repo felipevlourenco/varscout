@@ -108,7 +108,7 @@ suite('token completion provider', () => {
             '--space-2',
             '--space-4',
             '--space-10',
-            '--accent',
+            '--space-20',
         ]);
         const space = ours.find((i) => name(i) === '--space-4')!;
         assert.strictEqual((space.label as vscode.CompletionItemLabel).description, 'space · 1rem (16px)');

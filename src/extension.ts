@@ -7,6 +7,8 @@ import { SELECTOR } from './languages';
 import { hardcodedValueFixes } from './quickfix';
 import { forgetFile, invalidateTokens, readTokenFile } from './tokens';
 import { getTokenFiles, watchTokenFiles } from './tokenFiles';
+import { showUnusedTokens } from './unused';
+import { invalidateWorkspaceVars, watchWorkspaceVars } from './workspaceVars';
 
 export function activate(context: vscode.ExtensionContext) {
     const out = vscode.window.createOutputChannel('VarScout');
@@ -16,6 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
             forgetFile(changed); // a watcher saw it change: don't trust the modification-time check
         }
         invalidateTokens();
+        invalidateWorkspaceVars(); // the set of token files may have changed
         diagnostics.refreshAll();
     };
 
@@ -29,8 +32,13 @@ export function activate(context: vscode.ExtensionContext) {
             providedCodeActionKinds: [vscode.CodeActionKind.QuickFix],
         }),
         watchTokenFiles(reload),
+        watchWorkspaceVars(() => diagnostics.refreshAll()),
         // Files inside node_modules aren't watched by VS Code, so changes after an install need this.
-        vscode.commands.registerCommand('varscout.reloadTokens', () => reload()),
+        vscode.commands.registerCommand('varscout.reloadTokens', () => {
+            invalidateWorkspaceVars(true);
+            reload();
+        }),
+        vscode.commands.registerCommand('varscout.showUnusedTokens', showUnusedTokens),
         // Debug aid: dumps what the parser extracted from every configured token file.
         vscode.commands.registerCommand('varscout.showTokens', async () => {
             out.clear();

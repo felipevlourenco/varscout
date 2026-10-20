@@ -1,27 +1,39 @@
 /* Try completion here: type `var(` or `--` after a colon, e.g. `color: var(`  or  `color: --pri` */
 .btn {
-  color:
+    color:;
 }
 
 /* Hover test: hover over the token names inside var(...) */
 .card {
-  color: var(--primary);
-  background: var(--blue-500);
-  box-shadow: var(--ring);
-  border-color: var(--does-not-exist);
+    color: var(--primary);
+    background: var(--blue-500);
+    box-shadow: var(--ring);
+    border-color: var(--does-not-exist);
 }
 
 /* Diagnostics test: the typo below should get a warning, the others not */
 .oops {
-  --local: 4px;
-  padding: var(--local);
-  color: var(--primry);
-  background: var(--primary);
+    --local: 4px;
+    padding: var(--local);
+    color: var(--primry);
+    background: var(--primary);
 }
 
 /* Quick fix test: put the cursor on a value and press Cmd+. (Ctrl+.) */
 .hardcoded {
-  color: #3b82f6;
-  padding: 1rem;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 10%), 0 4px 8px rgb(0 0 0 / 20%);
+    color: #3b82f6;
+    padding: 1rem;
+    box-shadow:
+        0 1px 2px rgb(0 0 0 / 10%),
+        0 4px 8px rgb(0 0 0 / 20%);
+}
+
+/* Declared in dynamic.tsx: no warning, and Cmd+click goes there */
+.panel {
+    margin-top: var(--dynamic-offset);
+}
+
+.t {
+    color: var(--brand-new);
+    background-color: var(--surface);
 }

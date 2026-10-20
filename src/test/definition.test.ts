@@ -46,4 +46,16 @@ suite('token definition', () => {
         assert.deepStrictEqual(await definitions('a { color: var(--nope); }', '--nope'), []);
         assert.deepStrictEqual(await definitions('a { --primary: red; }', '--primary'), []);
     });
+
+    test('a name declared outside the token files jumps to where it is declared', async () => {
+        const content = 'a { margin: var(--dynamic-offset); }';
+        const doc = await vscode.workspace.openTextDocument({ language: 'css', content });
+        const result = await vscode.commands.executeCommand<(vscode.Location | vscode.LocationLink)[]>(
+            'vscode.executeDefinitionProvider',
+            doc.uri,
+            doc.positionAt(content.indexOf('--dynamic') + 4),
+        );
+        const links = result.map((r) => ('targetUri' in r ? r.targetUri : r.uri)).filter((u) => u.path.endsWith('styles/dynamic.tsx'));
+        assert.strictEqual(links.length, 1);
+    });
 });
