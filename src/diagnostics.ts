@@ -6,7 +6,38 @@ import { getWorkspaceIndex } from './workspaceVars';
 const blank = (css: string, lineComments: boolean) =>
     css.replace(lineComments ? /\/\*[\s\S]*?\*\/|(?<![:\w])\/\/[^\n]*/g : /\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
 
-/** `var(--x` usages and `--x:` declarations in `css` (each with the offset of the name), ignoring comments. */
+/**
+ * Text from `from` up to the first character of `stops` outside brackets and strings (or an unmatched closing bracket),
+ * with one pair of surrounding quotes removed. Long values are cut off.
+ */
+function valueFrom(text: string, from: number, stops: string): string {
+    let depth = 0;
+    let quote = '';
+    let j = from;
+    for (; j < text.length && j - from < 300; j++) {
+        const c = text[j];
+        if (quote) {
+            j += c === '\\' ? 1 : 0;
+            quote = c === quote ? '' : quote;
+        } else if ('"\'`'.includes(c)) {
+            quote = c;
+        } else if ('([{'.includes(c)) {
+            depth++;
+        } else if (')]}'.includes(c)) {
+            if (!depth--) {
+                break;
+            }
+        } else if (!depth && stops.includes(c)) {
+            break;
+        }
+    }
+    return text.slice(from, j).trim().replace(/^(["'`])(.*)\1$/s, '$2');
+}
+
+/**
+ * `var(--x` usages and `--x:` declarations in `css` (each with the offset of the name, declarations also with their value),
+ * ignoring comments.
+ */
 export function scanVars(css: string, lineComments = false) {
     const text = blank(css, lineComments);
     const usages = [...text.matchAll(/var\(\s*(--[\w-]+)/g)].map((m) => ({
@@ -14,9 +45,17 @@ export function scanVars(css: string, lineComments = false) {
         index: m.index + m[0].length - m[1].length,
     }));
     // `--x:` in CSS, `'--x':` in style objects, `style.setProperty('--x', ...)` in scripts.
-    const declarations = [...text.matchAll(/(--[\w-]+)['"]?\s*:|setProperty\(\s*['"`](--[\w-]+)/g)].map((m) => {
-        const name = m[1] ?? m[2];
-        return { name, index: m.index + m[0].indexOf(name) };
+    const declarations = [...text.matchAll(/(--[\w-]+)(['"]?)\s*:|setProperty\(\s*['"`](--[\w-]+)/g)].map((m) => {
+        const name = m[1] ?? m[3];
+        const end = m.index + m[0].length;
+        let value: string;
+        if (m[1] === undefined) {
+            const comma = /^['"`]\s*,/.exec(text.slice(end));
+            value = comma ? valueFrom(text, end + comma[0].length, '') : '';
+        } else {
+            value = valueFrom(text, end, m[2] ? ',' : ';'); // a quoted key is a style object: the value ends at the comma
+        }
+        return { name, index: m.index + m[0].indexOf(name), value };
     });
     return { usages, declarations, declared: new Set(declarations.map((d) => d.name)) };
 }

@@ -10,6 +10,8 @@ export interface VarDecl {
     /** 0-based position of the name. */
     line: number;
     column: number;
+    /** As written in the source (`red`, `${offset}px`); empty when it couldn't be read. */
+    value: string;
 }
 
 export interface WorkspaceIndex {
@@ -46,7 +48,7 @@ async function scanFile(uri: vscode.Uri): Promise<FileInfo> {
                 const offset = start + d.index;
                 const lineStart = text.lastIndexOf('\n', offset - 1) + 1;
                 const line = text.slice(0, offset).split('\n').length - 1;
-                info.declarations.push({ name: d.name, uri, line, column: offset - lineStart });
+                info.declarations.push({ name: d.name, uri, line, column: offset - lineStart, value: d.value });
             }
         }
         for (const m of text.matchAll(/getPropertyValue\(\s*['"`](--[\w-]+)/g)) {

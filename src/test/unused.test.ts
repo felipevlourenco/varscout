@@ -23,7 +23,7 @@ suite('workspace index', () => {
         const { declarations, used } = await getWorkspaceIndex();
         const [d] = declarations.get('--dynamic-offset')!;
         assert.ok(d.uri.path.endsWith('styles/dynamic.tsx'));
-        assert.strictEqual(d.line, 1);
+        assert.strictEqual(d.line, 2);
         assert.ok(used.has('--primary'));
         assert.ok(!declarations.has('--from-node-modules'));
     });
