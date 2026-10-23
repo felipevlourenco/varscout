@@ -21,6 +21,12 @@ suite('token hover', () => {
         assert.ok(text.includes('`--primary` → `--blue-500`'), text);
     });
 
+    test('a name declared outside the token files shows its value and where it is declared', async () => {
+        const text = await hover('a { margin: var(--dynamic-offset); }', '--dynamic-offset');
+        assert.ok(text.includes('--dynamic-offset: ${offset}px;'), text);
+        assert.ok(text.includes('styles/dynamic.tsx:3'), text);
+    });
+
     test('lists every definition of a redefined token', async () => {
         const text = await hover('a { color: var(--blue-500); }', '--blue-500');
         assert.ok(

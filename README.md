@@ -55,7 +55,7 @@ Hover the token name inside `var(--x)` to see its resolved value, the reference 
 
 ### Go to definition
 
-Cmd/Ctrl+click on the token name inside `var(--x)` jumps to where it is declared. For a name that isn't in a token file but is declared elsewhere in the workspace (say, in a JSX style object), it jumps there. If it is declared more than once (for example once per theme), VS Code shows all declarations.
+Cmd/Ctrl+click on the token name inside `var(--x)` jumps to where it is declared. For a name that isn't in a token file but is declared elsewhere in the workspace (say, in a JSX style object), it jumps there, and hover shows the value as written plus the file and line. If it is declared more than once (for example once per theme), VS Code shows all declarations.
 
 ### Themes
 

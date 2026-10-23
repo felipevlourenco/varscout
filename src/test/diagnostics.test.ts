@@ -21,6 +21,21 @@ suite('scanVars', () => {
     });
 });
 
+suite('scanVars values', () => {
+    test('reads the value of CSS declarations, style-object keys and setProperty calls', () => {
+        const code = `a { --css: 0 1px rgb(0 0 0 / 5%), 2px; --b: 1 } x = { '--obj': 'red', w: 1 }; el.style.setProperty('--sp', f(1, 2));`;
+        assert.deepStrictEqual(
+            scanVars(code).declarations.map((d) => [d.name, d.value]),
+            [
+                ['--css', '0 1px rgb(0 0 0 / 5%), 2px'],
+                ['--b', '1'],
+                ['--obj', 'red'],
+                ['--sp', 'f(1, 2)'],
+            ],
+        );
+    });
+});
+
 suite('cssRegions', () => {
     test('whole text, or only <style> contents for vue/svelte/astro', () => {
         assert.deepStrictEqual(cssRegions('abc', 'css'), [{ start: 0, end: 3 }]);

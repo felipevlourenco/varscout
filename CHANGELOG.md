@@ -2,6 +2,10 @@
 
 All notable changes to the "varscout" extension are documented in this file.
 
+## [1.0.1]
+
+- Hovering `var(--x)` where `--x` is declared outside the token files (a JSX style object, another stylesheet, `setProperty`) now shows its value and where it is declared
+
 ## [1.0.0]
 
 - New command **VarScout: Show Unused Tokens** lists the tokens that no file in the workspace refers to; pick one to open its declaration
